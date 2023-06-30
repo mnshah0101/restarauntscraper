@@ -1,18 +1,19 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const progressBar = require("progress-bar-cli");
 
 
 function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-let getReviews = async function (url, file) {
+let getReviews = async function (url) {
+    let start = new Date();
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
     await page.goto(url);
-    await page.waitForSelector('.M77dve ', { visible: true });
-    console.log('clicking button')
-    const elements = await page.$$('.hh2c6');
+    await page.waitForSelector('.LRkQ2', { visible: true });
+    const elements = await page.$$('.LRkQ2');
 
     await elements[1].click();
 
@@ -26,62 +27,69 @@ let getReviews = async function (url, file) {
 
     let reviews_number = innerText.replace(' reviews', '');
     reviews_number = parseInt(reviews_number.replace(/,/g, ""));
-    console.log('wait for selector')
     await page.waitForSelector('div.m6QErb.DxyBCb.kA9KIf.dS8AEf ');
 
     const divHandle = await page.$('.m6QErb.DxyBCb.kA9KIf.dS8AEf ');
-    let scrollTimes = Math.ceil(reviews_number / 10);
-    for (let i = 0; i < scrollTimes; i++) {
+    let divReviews = await page.$$('div.jJc9Ad');
+
+    let time_start = new Date();
+
+    while (divReviews.length < reviews_number) {
+        progressBar.progressBar(divReviews.length, reviews_number, start);
+
         await divHandle.evaluate((div) => {
             div.scrollTop = div.scrollHeight;
         });
 
-        console.log('scroll');
         await delay(100);
-
+        divReviews = await page.$$('div.jJc9Ad');
+        if (new Date() - time_start > 1000 * 60 * 5) {
+            console.log("Timeout")
+            break;
+        }
     }
+
 
     const divs = await page.$$('div.jJc9Ad');
 
     const jsonObjects = [];
 
     for (const div of divs) {
-        const name = await div.$eval('div.d4r55', (el) => el.innerText);
-        const time = (await div.$eval('div.DU9Pgb', (el) => el.innerText)).replace('\nNEW', '');
-        const stars = parseInt((await div.$eval('span.kvMYJc', (el) => el.getAttribute('aria-label'))).split(' ')[0]);
-        const review = await div.$eval('span.wiI7pd', (el) => el.innerText);
+        try {
+            const name = await div.$eval('div.d4r55', (el) => el.innerText);
+            const time = (await div.$eval('div.DU9Pgb', (el) => el.innerText)).replace('\nNEW', '');
+            const stars = parseInt((await div.$eval('span.kvMYJc', (el) => el.getAttribute('aria-label'))).split(' ')[0]);
+            const review = '';
+            try {
+                review = await div.$eval('span.wiI7pd', (el) => el.innerText);
+            } catch (err) {
+                ;
+            }
+            const jsonObject = {
+                name: name,
+                time: time,
+                review: review,
+                stars: stars
+            };
 
-        const jsonObject = {
-            name: name,
-            time: time,
-            review: review,
-            stars: stars
-        };
-
-        jsonObjects.push(jsonObject);
-    }
-
-
-
-    const jsonString = JSON.stringify(jsonObjects);
-    const filePath = file;
-
-    fs.writeFile(filePath, jsonString, (err) => {
-        if (err) {
-            console.error('Error writing JSON file:', err);
-            return;
+            jsonObjects.push(jsonObject);
+        } catch (err) {
+            console.log(err)
         }
-        console.log('JSON data has been written to the file successfully.');
-    });
 
 
 
 
-
-
-
+    }
     await browser.close();
+    console.log('Number of reviews: ' + reviews_number)
+
+    console.log("Number found" + jsonObjects.length)
+    console.log("Time taken: " + (new Date() - start) / 1000 + " seconds")
+    console.log('\n')
+
+    return jsonObjects
 
 };
 
-getReviews('https://www.google.com/maps/search/?api=1&query=36.7139198%2C-95.9359731&query_place_id=ChIJ24juBIQRt4cRHDRRmeObTG0', 'mcdonalds.json');
+module.exports = getReviews;
