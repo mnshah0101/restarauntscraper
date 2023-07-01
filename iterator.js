@@ -4,8 +4,7 @@ var scraper = require("./scraper.js");
 
 var text = fs.readFileSync("./urls.txt").toString('utf-8');
 var textByLine = text.split("\n")
-textByLine = [...new Set(textByLine)];
-
+textByLine = [...new Set(textByLine)]
 
 
 let getAllReviews = async function (link_array) {

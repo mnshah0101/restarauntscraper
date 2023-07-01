@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const progressBar = require("progress-bar-cli");
+const { time } = require('console');
 
 
 function delay(ms) {
@@ -11,16 +12,28 @@ let getReviews = async function (url) {
     let start = new Date();
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/83.0.4103.97 Chrome/83.0.4103.97 Safari/537.36');
     await page.goto(url);
     await page.waitForSelector('.LRkQ2', { visible: true });
     const elements = await page.$$('.LRkQ2');
 
     await elements[1].click();
+    console.log("Clicked")
+    await page.waitForSelector('.GMtm7c', { visible: true });
+    console.log("Waited")
+    await delay(1000);
+    const click_sort = await page.$$('.GMtm7c');
+    await click_sort[1].click();
+    console.log("Clicked 2")
+
+    await page.waitForSelector('.mLuXec', { visible: true });
+    const click_sort_2 = await page.$$('.mLuXec');
+    console.log(click_sort_2.length)
+    await click_sort_2[1].click();
 
 
+    await delay(1000);
 
-
-    await page.waitForSelector('.jANrlb .fontBodySmall', { visible: true });
 
     const innerText = await page.$eval('.jANrlb .fontBodySmall', (element) => element.innerText);
     console.log(innerText)
@@ -32,7 +45,8 @@ let getReviews = async function (url) {
     const divHandle = await page.$('.m6QErb.DxyBCb.kA9KIf.dS8AEf ');
     let divReviews = await page.$$('div.jJc9Ad');
 
-    let time_start = new Date();
+
+    let length_arr = [];
 
     while (divReviews.length < reviews_number) {
         progressBar.progressBar(divReviews.length, reviews_number, start);
@@ -41,12 +55,17 @@ let getReviews = async function (url) {
             div.scrollTop = div.scrollHeight;
         });
 
-        await delay(100);
+        await delay(500);
+        length_arr.push(divReviews.length);
         divReviews = await page.$$('div.jJc9Ad');
-        if (new Date() - time_start > 1000 * 60 * 5) {
+
+        if (length_arr.length > 5 && length_arr[length_arr.length - 5] == length_arr[length_arr.length - 1]) {
             console.log("Timeout")
             break;
         }
+
+
+
     }
 
 
@@ -91,5 +110,8 @@ let getReviews = async function (url) {
     return jsonObjects
 
 };
+
+getReviews('https://www.google.com/maps/search/?api=1&query=34.0251065%2C-118.3939679&query_place_id=ChIJ3Z9z9Cm6woARsuDO-ZzwQhs'
+)
 
 module.exports = getReviews;
