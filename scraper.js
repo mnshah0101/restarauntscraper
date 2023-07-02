@@ -111,7 +111,6 @@ let getReviews = async function (url) {
 
 };
 
-getReviews('https://www.google.com/maps/search/?api=1&query=34.0251065%2C-118.3939679&query_place_id=ChIJ3Z9z9Cm6woARsuDO-ZzwQhs'
-)
+
 
 module.exports = getReviews;

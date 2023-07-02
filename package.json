@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "progress-bar-cli": "^1.0.4",
-    "puppeteer": "^20.7.4"
+    "puppeteer": "^20.7.4",
+    "us-zips": "2022.09"
   }
 }
