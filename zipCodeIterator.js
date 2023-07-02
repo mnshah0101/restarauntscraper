@@ -1,6 +1,10 @@
 const usZips = require('us-zips/array')
 const getLinks = require('./getLinks.js');
 var fs = require("fs");
+require('events').EventEmitter.defaultMaxListeners = 20;
+const progressBar = require("progress-bar-cli");
+const { time } = require('console');
+
 
 
 
@@ -23,10 +27,11 @@ let zipCodeIterator = async function (restaurant_name, restaraunt_url_name) {
 let parallelZipCodeIterator = async function (restaurant_name, restaraunt_url_name) {
     let placeIDLinks = [];
     let promises = [];
-    let zips = usZips.slice(0, 20);
-    for (let i = 0; i < zips.length; i += 10) {
+    let start = new Date();
+    for (let i = 0; i < usZips.length; i += 5) {
+        progressBar.progressBar(i, usZips.length, start);
         promises = [];
-        for (let j = i; j < i + 10; j++) {
+        for (let j = i; j < i + 5; j++) {
             let zip = usZips[j];
             let promise = getLinks(zip['zipCode'], restaurant_name, restaraunt_url_name);
             promises.push(promise);

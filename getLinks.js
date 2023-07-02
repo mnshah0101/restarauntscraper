@@ -8,40 +8,47 @@ function delay(ms) {
 }
 let getLinks = async function (zipcode, restaurant_name, restaraunt_url_name) {
     let start = Date.now();
-    console.log(zipcode)
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
 
 
     await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/83.0.4103.97 Chrome/83.0.4103.97 Safari/537.36');
     await page.goto("https://www.google.com/maps/search/" + zipcode);
-    await delay(2000);
-    await page.waitForSelector('.searchboxinput');
+    await page.waitForSelector('.searchboxinput', { visible: true });
 
 
     await page.type('.searchboxinput', " " + restaurant_name);
     await page.keyboard.press('Enter');
-    await delay(2000);
-
-
-
+    await delay(2500);
 
 
     let page_url = page.url();
 
     if (page_url.includes("place")) {
         browser.close();
-        console.log(page_url)
         let return_arr = [];
         return_arr.push(page_url);
         return return_arr;
 
     }
+    try {
+        await page.waitForSelector('.hfpxzc', { visible: true, timeout: 5000 });
+    } catch (err) {
+        page_url = page.url();
+        if (page_url.includes("place")) {
+            browser.close();
+            let return_arr = [];
+            return_arr.push(page_url);
+            return return_arr;
+
+        }
+
+    }
+
     let HlvSqB = await page.$('.PbZDve');
     while (!HlvSqB) {
         HlvSqB = await page.$('.PbZDve');
         let search_objects = await page.$$('.hfpxzc');
-        console.log(search_objects.length)
         let search_object = search_objects[search_objects.length - 1];
         await search_object.scrollIntoView();
         await delay(500);
@@ -82,7 +89,6 @@ let getLinks = async function (zipcode, restaurant_name, restaraunt_url_name) {
 
 
     browser.close();
-    console.log(links)
 
     return links;
 }
