@@ -6,7 +6,8 @@ const { time } = require('console');
 function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
-let getLinks = async function (zipcode, restaurant_name) {
+let getLinks = async function (zipcode, restaurant_name, restaraunt_url_name) {
+    let start = Date.now();
     console.log(zipcode)
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
@@ -43,7 +44,10 @@ let getLinks = async function (zipcode, restaurant_name) {
         console.log(search_objects.length)
         let search_object = search_objects[search_objects.length - 1];
         await search_object.scrollIntoView();
-        await delay(1000);
+        await delay(500);
+        if (start + 1000 * 20 < Date.now()) {
+            break;
+        }
     }
 
 
@@ -69,7 +73,7 @@ let getLinks = async function (zipcode, restaurant_name) {
     //links are the href of the a tag
     for (let link of link_objects) {
         let link_href = await page.evaluate((el) => el.href, link);
-        if (link_href.includes('place')) {
+        if (link_href.includes(restaraunt_url_name)) {
             links.push(link_href);
         }
     }
